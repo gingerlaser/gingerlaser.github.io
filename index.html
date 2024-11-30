@@ -1,1 +1,205 @@
-hello
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confetti Celebration</title>
+    <style>
+        #confettiButton1 {
+            padding: 10px 20px;
+            font-size: 160px;
+            background-color: #007BFF;
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #confettiButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <button id="confettiButton">Celebrate!</button>
+    <button id="confettiButton1">Celebrate!</button>
+
+    <canvas id="myCanvas" width="500" height="300" style="border:1px solid #000;"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+    <script>
+        const button = document.getElementById('confettiButton1');
+        
+        button.addEventListener('click', () => {
+            const particleCount = 1000 * Math.random()
+            console.log(particleCount)
+            confetti({
+                particleCount: particleCount,
+                spread: 100,
+                origin: { y: 1}
+            });
+        });
+
+
+// Get the canvas element and its context
+const canvas = document.getElementById('myCanvas');
+const ctx = canvas.getContext('2d');
+
+// Canvas dimensions
+const canvasWidth = canvas.width;
+const canvasHeight = canvas.height;
+
+// Circle objects
+const circles = [
+    //{ x: 150, y: 50, radius: 30, color: 'green', speedY: 4},
+    //{ x: 300, y: 100, radius: 40, color: 'red', spee
+];
+const nCircles = 10
+for (var i = 0; i < nCircles; i ++) {
+    circles.push({
+        x: 500*Math.random(),
+        y: 50*Math.random()+30,
+        radius: 30*Math.random(),
+        color: 'green',
+        speedY: 10*Math.random()-5,
+        speedX: 5*Math.random()-2.5
+    })
+}
+// Function to draw a circle
+function drawCircle(circle) {
+    ctx.beginPath();
+    ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
+    ctx.fillStyle = circle.color;
+    ctx.fill();
+    ctx.closePath();
+}
+
+var g = 0.05
+var dampen = 0.8
+
+function euclid(x, y) {
+    return (x ** 2 + y ** 2) ** 0.5
+}
+
+// check if two circles are overlapping
+// negative if overlapping
+// positive if not overlapping
+function overlap(c1, c2) {
+    const distX = c1.x - c2.x 
+    const distY = c1.y - c2.y 
+    const dist = euclid(distX, distY)
+    return dist - c1.radius - c2.radius
+}
+
+function normalize(x, y) {
+    const dist = euclid(x, y)
+    x /= dist
+    y /= dist
+    return [x, y]
+}
+
+
+
+// Function to update the position of circles
+function updateCircles() {
+    
+    //acceleration += 0.01;
+    //for (const circle of circles) {
+
+    for (var i = 0; i < circles.length; i++) {
+
+        const circle = circles[i]
+
+        // Update speed and position
+        circle.speedY += g
+        circle.y += circle.speedY;
+        circle.x += circle.speedX
+
+        // Check if circle i is hitting circle j
+        for (var j = 0; j < circles.length; j++) {
+            const other = circles[j]
+            // we have two different circles
+            if (i != j) {
+                const ov = overlap(circle, other)
+                if (ov < 0) { // negative if circles are overlapping
+
+                    var [ux, uy] = normalize(circle.x - other.x, circle.y - other.y)
+
+                    var circleSpeed = euclid(circle.speedX, circle.speedY)
+                    var otherSpeed = euclid(other.speedX, other.speedY)
+
+                    // not that good
+                    /*
+                    circle.speedX = ux * (circle.speedX / circleSpeed)
+                    other.speedX = -ux * (other.speedX / otherSpeed)
+                    circle.speedY = uy * (circle.speedY / circleSpeed)
+                    other.speedY = -uy * (other.speedY / otherSpeed)
+                    */
+
+                    // swimming
+                    /*
+                    circle.speedX = -ux
+                    other.speedX = ux
+                    circle.speedY = -uy
+                    other.speedY = uy
+                    */
+
+                    circle.speedX = ux
+                    other.speedX = -ux
+                    circle.speedY = uy
+                    other.speedY = -uy
+
+                    circle.x = circle.x - ov * ux * 0.5
+                    other.x = other.x + ov * ux * 0.5
+                    circle.y = circle.y - ov * uy * 0.5
+                    other.y = other.y + ov * uy * 0.5
+
+                    //circle.speedX *= 0.3
+                    //other.speedX *= 0.3
+                    //circle.speedY *= 0.3
+                    //other.speedY *= 0.3
+                } 
+            }
+        }
+
+        // Circle hits the bottom of the canvas
+        if (circle.y + circle.radius >= canvasHeight) {
+            circle.y = canvasHeight - circle.radius
+            circle.speedY = -dampen * circle.speedY
+            circle.speedX = dampen * circle.speedX
+        }
+        // Circle hits the top of the canvas
+        if (circle.y - circle.radius <= 0) {
+            circle.y = 0 + circle.radius
+            circle.speedY = -dampen * circle.speedY
+        }
+        // Circle hits the right of the canvas
+        if (circle.x + circle.radius >= canvasWidth) {
+            circle.x = canvasWidth - circle.radius
+            circle.speedX = -dampen * circle.speedX
+        }
+        // Circle hits the right of the canvas
+        if (circle.x - circle.radius <= 0) {
+            circle.x = 0 + circle.radius
+            circle.speedX = -dampen * circle.speedX
+        }
+    }
+}
+
+// Function to animate the circles
+function animate() {
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight); // Clear canvas
+    for (const circle of circles) {
+        drawCircle(circle); // Draw each circle
+    }
+    updateCircles(); // Update positions
+    requestAnimationFrame(animate); // Loop the animation
+}
+
+// Start the animation
+animate();
+
+
+    </script>
+</body>
+</html>
