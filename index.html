@@ -199,5 +199,87 @@ animate();
 
 
     </script>
+    <h1>Bézier Curve Manipulation</h1>
+    <canvas id="bezierCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('bezierCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let points = [
+            { x: 150, y: 300 }, // Start point
+            { x: 300, y: 100 }, // Control point 1
+            { x: 500, y: 100 }, // Control point 2
+            { x: 650, y: 300 }  // End point
+        ];
+
+        let draggingPoint = null;
+
+        function drawCurve() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw control points and lines
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                ctx.lineTo(points[i].x, points[i].y);
+            }
+            ctx.stroke();
+
+            // Draw Bézier curve
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            ctx.bezierCurveTo(
+                points[1].x, points[1].y,
+                points[2].x, points[2].y,
+                points[3].x, points[3].y
+            );
+            ctx.stroke();
+
+            // Draw control points as circles
+            points.forEach(point => {
+                ctx.fillStyle = '#f00';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function getMousePosition(event) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
+        canvas.addEventListener('mousedown', event => {
+            const mousePos = getMousePosition(event);
+            draggingPoint = points.find(point => {
+                const dx = point.x - mousePos.x;
+                const dy = point.y - mousePos.y;
+                return Math.sqrt(dx * dx + dy * dy) < 10;
+            });
+        });
+
+        canvas.addEventListener('mousemove', event => {
+            if (draggingPoint) {
+                const mousePos = getMousePosition(event);
+                draggingPoint.x = mousePos.x;
+                draggingPoint.y = mousePos.y;
+                drawCurve();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            draggingPoint = null;
+        });
+
+        drawCurve();
+    </script>
 </body>
 </html>
