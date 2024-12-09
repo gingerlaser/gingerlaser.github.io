@@ -21,7 +21,7 @@
     </style>
 </head>
 <body>
-    <button id="confettiButton">Celebrate!</button>
+    <button id="confettiButton">Add Gravity!</button>
     <button id="confettiButton1">Celebrate!</button>
 
     <canvas id="myCanvas" width="500" height="300" style="border:1px solid #000;"></canvas>
@@ -37,6 +37,10 @@
                 particleCount: particleCount,
                 spread: 100,
                 origin: { y: 1}
+        const button = document.getElementById('confettiButton');
+        
+        button.addEventListener('click', () => {
+            g = g + 0.05
             });
         });
 
